@@ -1,5 +1,114 @@
 # `cortex-m-quickstart`
 
+https://qiita.com/Kosuke_Matsui/items/031b2d60f3242617115e
+https://zeptoelecdesign.com/rust-embedded2/
+https://github.com/cmsis-svd/cmsis-svd/blob/main/data/STMicro/STM32F429.svd
+
+エラーが長すぎて最初のを見れないときはlessを組み合わせる
+https://stackoverflow.com/questions/27082748/only-show-first-screenful-of-compile-errors-in-rust-when-building-with-cargo
+```
+cargo test --color always 2>&1 | less -r
+```
+
+クロスビルドツールが無くてエラー
+```
+error[E0463]: can't find crate for `core`
+  |
+  = note: the `thumbv7em-none-eabihf` target may not be installed
+  = help: consider downloading the target with `rustup target add thumbv7em-none-eabihf`
+```
+
+install cross compiler
+```
+rustup target add thumbv7em-none-eabihf
+```
+
+check latest versions
+https://crates.io/search?q=cortex-m
+
+error because missing arm-node-eabi-gdb
+```
+GDB executable "arm-none-eabi-gdb" was not found.
+Please configure "cortex-debug.armToolchainPath" or "cortex-debug.gdbPath" correctly.```
+```
+     Running `arm-none-eabi-gdb -q -x openocd.gdb target/thumbv7em-none-eabihf/debug/stm32f429zi-test`
+error: could not execute process `arm-none-eabi-gdb -q -x openocd.gdb target/thumbv7em-none-eabihf/debug/stm32f429zi-test` (never executed)
+
+Caused by:
+  No such file or directory (os error 2)
+```
+
+Install gdb-multiarch.
+```sh
+sudo apt install -y gdb-multiarch
+```
+
+Error
+```
+Launching gdb-server: openocd -c "gdb_port 50000" -c "tcl_port 50001" -c "telnet_port 50002" -s /home/asuki/rustprojects/stm32f429zi-test -f /home/asuki/.vscode/extensions/marus25.cortex-debug-1.12.1/support/openocd-helpers.tcl -f interface/stlink.cfg -f target/stm32f4x.cfg
+    Please check TERMINAL tab (gdb-server) for output from openocd
+Finished reading symbols from objdump: Time: 32 ms
+Finished reading symbols from nm: Time: 27 ms
+Failed to launch OpenOCD GDB Server: Error: spawn openocd ENOENT
+```
+
+```sh
+sudo apt install -y openocd
+```
+
+openocdのエラーが出るので、デバッグコンソール似表示されるopenocdのコマンドを直実行
+```
+openocd -c "gdb_port 50000" -c "tcl_port 50001" -c "telnet_port 50002" -s /home/asuki/rustprojects/stm32f429zi-test -f /home/asuki/.vscode/extensions/marus25.cortex-debug-1.12.1/support/openocd-helpers.tcl -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg
+Open On-Chip Debugger 0.11.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+CDLiveWatchSetup
+WARNING: interface/stlink-v2-1.cfg is deprecated, please switch to interface/stlink.cfg
+Info : auto-selecting first available session transport "hla_swd". To override use 'transport select <transport>'.
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+Info : Listening on port 50001 for tcl connections
+Info : Listening on port 50002 for telnet connections
+Info : clock speed 2000 kHz
+Error: open failed
+```
+
+stm32を繋いで実行したら先に進んだ
+
+```
+ 
+xPSR: 0x01000000 pc: 0x080023b0 msp: 0x20030000
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x080023b0 msp: 0x20030000
+  stm32f4x.cpu tpiu
+    stm32f4x.cpu tpiu config (disable | ((external | internal (<filename> | <:port> | -)) (sync <port
+              width> | ((manchester | uart) <formatter enable>))
+              <TRACECLKIN freq> [<trace freq>]))
+tpiu
+  tpiu config (disable | ((external | internal (<filename> | <:port> | -)) (sync <port
+            width> | ((manchester | uart) <formatter enable>)) <TRACECLKIN
+            freq> [<trace freq>]))
+Error: invalid subcommand "init"
+  stm32f4x.cpu tpiu
+    stm32f4x.cpu tpiu config (disable | ((external | internal (<filename> | <:port> | -)) (sync <port
+              width> | ((manchester | uart) <formatter enable>))
+              <TRACECLKIN freq> [<trace freq>]))
+tpiu
+  tpiu config (disable | ((external | internal (<filename> | <:port> | -)) (sync <port
+            width> | ((manchester | uart) <formatter enable>)) <TRACECLKIN
+            freq> [<trace freq>]))
+Error: invalid subcommand "names"
+/home/asuki/.vscode/extensions/marus25.cortex-debug-1.12.1/support/openocd-helpers.tcl:15: Error: 
+in procedure 'CDSWOConfigure' 
+at file "/home/asuki/.vscode/extensions/marus25.cortex-debug-1.12.1/support/openocd-helpers.tcl", line 15
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x080023b0 msp: 0x20030000
+```
+
 > A template for building applications for ARM Cortex-M microcontrollers
 
 This project is developed and maintained by the [Cortex-M team][team].

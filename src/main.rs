@@ -1,20 +1,26 @@
+#![deny(unsafe_code)]
 #![no_std]
 #![no_main]
 
-// pick a panicking behavior
-use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch panics
-// use panic_abort as _; // requires nightly
-// use panic_itm as _; // logs messages over ITM; requires ITM support
-// use panic_semihosting as _; // logs messages to the host stderr; requires a debugger
+use cortex_m_rt as rt;
+use hal::prelude::*;
+use panic_halt as _;
+use stm32f4xx_hal as hal;
 
-use cortex_m::asm;
-use cortex_m_rt::entry;
-
-#[entry]
+#[rt::entry]
 fn main() -> ! {
-    asm::nop(); // To not have main optimize to abort in release mode, remove when you add code
+    if let Some(peripherals) = hal::pac::Peripherals::take() {
+        let gpiob = peripherals.GPIOB.split();
+        let mut led = gpiob.pb7.into_push_pull_output();
+        let gpioc = peripherals.GPIOC.split();
+        let button = gpioc.pc13;
 
-    loop {
-        // your code goes here
+        loop {
+            if button.is_high() {
+                led.set_low();
+            } else {
+                led.set_high();
+            }
+        }
     }
 }
